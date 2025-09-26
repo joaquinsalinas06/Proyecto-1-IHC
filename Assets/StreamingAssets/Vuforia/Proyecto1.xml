@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig>
+  <Tracking>
+    <ImageTarget name="capibara" size="4.000000 4.000000" />
+    <ImageTarget name="tungtung" size="4.000000 4.011753" />
+  </Tracking>
+</QCARConfig>
