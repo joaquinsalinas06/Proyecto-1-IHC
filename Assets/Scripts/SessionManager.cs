@@ -7,23 +7,26 @@ public class SessionManager : MonoBehaviour
     [Header("UI Elements")]
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI phraseText;
-    public Button startButton;
-    public Button pauseButton;
+    public Button playPauseButton;
     public Button resetButton;
+    public Slider progressBar;
+    public TextMeshProUGUI instructionsText;
     
     [Header("Session Settings")]
-    public float sessionDuration = 1500f; // 25 minutos (Pomodoro)
-    public float breakDuration = 300f; // 5 minutos
+    public float sessionDuration = 1500f;
+    public float breakDuration = 300f;
     
     private float currentTime;
+    private float originalSessionDuration;
     private bool isRunning = false;
     private bool isBreakTime = false;
     private int sessionPhraseIndex = 0;
+    private bool resetConfirmationPending = false;
+    private float resetConfirmationTime;
     
-    // Mensaje inicial separado de las frases de sesión
     private string initialMessage = "Prepárate para tu sesión de productividad";
+    private string instructionsMessage = "Toca el texto para cambiar frases durante la sesión";
     
-    // Frases solo para durante la sesión activa
     private string[] sessionPhrases = {
         "Concéntrate en tu respiración y en tus objetivos",
         "Cada minuto cuenta para tu crecimiento",
@@ -35,11 +38,16 @@ public class SessionManager : MonoBehaviour
     
     void Start()
     {
+        originalSessionDuration = sessionDuration;
         currentTime = sessionDuration;
         UpdateTimerDisplay();
-        phraseText.text = initialMessage; // Mostrar mensaje inicial
+        UpdateProgressBar();
         
-        // Agregar componente Button al texto para detectar toques
+        phraseText.text = initialMessage;
+        instructionsText.text = instructionsMessage;
+        
+        UpdateButtonStates();
+        
         Button textButton = phraseText.GetComponent<Button>();
         if (textButton == null)
         {
@@ -54,79 +62,177 @@ public class SessionManager : MonoBehaviour
         {
             currentTime -= Time.deltaTime;
             UpdateTimerDisplay();
+            UpdateProgressBar();
         }
         else if (isRunning && currentTime <= 0)
         {
             SessionComplete();
         }
+        
+        if (resetConfirmationPending && Time.time > resetConfirmationTime + 3f)
+        {
+            CancelResetConfirmation();
+        }
     }
     
-    // Método que se llama cuando se toca el texto
+    void UpdateProgressBar()
+    {
+        if (progressBar != null)
+        {
+            float totalDuration = isBreakTime ? breakDuration : originalSessionDuration;
+            float progress = 1f - (currentTime / totalDuration);
+            progressBar.value = Mathf.Clamp01(progress);
+        }
+    }
+    
+    void UpdateButtonStates()
+    {
+        playPauseButton.interactable = true;
+        resetButton.interactable = currentTime != originalSessionDuration;
+        
+        var playPauseText = playPauseButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (!isRunning && currentTime == originalSessionDuration)
+        {
+            playPauseText.text = "Iniciar";
+        }
+        else if (isRunning)
+        {
+            playPauseText.text = "Pausar";
+        }
+        else
+        {
+            playPauseText.text = "Continuar";
+        }
+    }
+    
     public void OnTextClicked()
     {
-        // Solo cambiar frases si la sesión está activa
         if (isRunning && !isBreakTime)
         {
             NextPhrase();
         }
     }
     
-    public void StartSession()
+    public void TogglePlayPause()
     {
-        isRunning = true;
-        startButton.interactable = false;
-        pauseButton.interactable = true;
+        if (!isRunning && currentTime == originalSessionDuration)
+        {
+            StartSession();
+        }
+        else
+        {
+            PauseResumeSession();
+        }
         
-        // Empezar con la primera frase de sesión
-        sessionPhraseIndex = 0;
-        phraseText.text = sessionPhrases[sessionPhraseIndex];
+        if (resetConfirmationPending)
+        {
+            CancelResetConfirmation();
+        }
     }
     
-    public void PauseSession()
+    void StartSession()
+    {
+        isRunning = true;
+        sessionPhraseIndex = 0;
+        phraseText.text = sessionPhrases[sessionPhraseIndex];
+        instructionsText.text = "Toca el texto para cambiar la frase motivacional";
+        
+        UpdateButtonStates();
+    }
+    
+    void PauseResumeSession()
     {
         isRunning = !isRunning;
-        
-        // Cambiar texto del botón
-        var buttonText = pauseButton.GetComponentInChildren<TextMeshProUGUI>();
-        buttonText.text = isRunning ? "Pausar" : "Continuar";
+        UpdateButtonStates();
     }
 
     public void ResetSession()
     {
+        if (resetConfirmationPending)
+        {
+            ConfirmReset();
+        }
+        else
+        {
+            if (currentTime != originalSessionDuration)
+            {
+                StartResetConfirmation();
+            }
+        }
+    }
+    
+    void StartResetConfirmation()
+    {
+        resetConfirmationPending = true;
+        resetConfirmationTime = Time.time;
+        
+        var buttonText = resetButton.GetComponentInChildren<TextMeshProUGUI>();
+        buttonText.text = "¿Confirmar?";
+        
+        instructionsText.text = "Presiona 'Confirmar' nuevamente para reiniciar";
+    }
+    
+    void CancelResetConfirmation()
+    {
+        resetConfirmationPending = false;
+        
+        var buttonText = resetButton.GetComponentInChildren<TextMeshProUGUI>();
+        buttonText.text = "Reiniciar";
+        
+        if (isRunning)
+        {
+            instructionsText.text = "Toca el texto para cambiar la frase motivacional";
+        }
+        else
+        {
+            instructionsText.text = instructionsMessage;
+        }
+    }
+    
+    void ConfirmReset()
+    {
         isRunning = false;
-        currentTime = isBreakTime ? breakDuration : sessionDuration;
+        isBreakTime = false;
+        currentTime = sessionDuration;
+        originalSessionDuration = sessionDuration;
         sessionPhraseIndex = 0;
         
-        startButton.interactable = true;
-        pauseButton.interactable = false;
+        phraseText.text = initialMessage;
+        instructionsText.text = instructionsMessage;
         
-        UpdateTimerDisplay();
-        phraseText.text = initialMessage; // Volver al mensaje inicial
-        
-        var buttonText = pauseButton.GetComponentInChildren<TextMeshProUGUI>();
-        buttonText.text = "Pausar";
+        CancelResetConfirmation();
+        UpdateButtonStates();
+        UpdateProgressBar();
     }
     
     void SessionComplete()
     {
-        isRunning = false;
+        CancelResetConfirmation();
         
         if (!isBreakTime)
         {
             isBreakTime = true;
             currentTime = breakDuration;
+            originalSessionDuration = breakDuration;
             phraseText.text = "¡Sesión completada! Tiempo de descanso";
+            instructionsText.text = "Disfruta tu merecido descanso";
+            
+            // Iniciar automáticamente el break
+            isRunning = true;
         }
         else
         {
+            isRunning = false;
             isBreakTime = false;
             currentTime = sessionDuration;
+            originalSessionDuration = sessionDuration;
             phraseText.text = "¡Descanso terminado! Nueva sesión";
+            instructionsText.text = instructionsMessage;
         }
         
-        startButton.interactable = true;
-        pauseButton.interactable = false;
         UpdateTimerDisplay();
+        UpdateButtonStates();
+        UpdateProgressBar();
     }
     
     void UpdateTimerDisplay()
