@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-
 public class SceneController : MonoBehaviour
 {
     public void EmpezarSesion()
@@ -9,3 +8,4 @@ public class SceneController : MonoBehaviour
         SceneManager.LoadScene("MainScene");
     }
 }
+
