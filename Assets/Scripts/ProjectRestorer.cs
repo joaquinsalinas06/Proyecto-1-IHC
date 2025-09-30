@@ -167,6 +167,93 @@ public class ProjectRestorer : MonoBehaviour
                 canvasScaler.referenceResolution = new Vector2(1920, 1080);
                 canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
                 canvasScaler.matchWidthOrHeight = 0.5f;
+                
+                Debug.Log("Canvas Scaler updated for mobile compatibility");
+            }
+        }
+
+        // Fix button and slider positions for mobile
+        FixButtonOverlap();
+        FixSliderBounds();
+    }
+
+    void FixButtonOverlap()
+    {
+        // Find buttons that might overlap with timer panel
+        Button[] buttons = FindObjectsOfType<Button>();
+        
+        foreach (Button button in buttons)
+        {
+            if (button.name.ToLower().Contains("iniciar") || 
+                button.name.ToLower().Contains("reiniciar") ||
+                button.name.ToLower().Contains("play") || 
+                button.name.ToLower().Contains("pause") ||
+                button.name.ToLower().Contains("reset"))
+            {
+                RectTransform buttonRect = button.GetComponent<RectTransform>();
+                if (buttonRect != null)
+                {
+                    // Adjust position to prevent overlap with timer
+                    Vector2 currentPos = buttonRect.anchoredPosition;
+                    
+                    // Move buttons lower if they're in the timer area
+                    if (currentPos.y > -300) // Adjust this value based on your timer position
+                    {
+                        buttonRect.anchoredPosition = new Vector2(currentPos.x, -350);
+                        Debug.Log($"Adjusted {button.name} position to prevent timer overlap");
+                    }
+                }
+            }
+        }
+    }
+
+    void FixSliderBounds()
+    {
+        Slider[] sliders = FindObjectsOfType<Slider>();
+        
+        foreach (Slider slider in sliders)
+        {
+            RectTransform sliderRect = slider.GetComponent<RectTransform>();
+            if (sliderRect != null)
+            {
+                // Find the parent panel
+                Transform parent = sliderRect.parent;
+                while (parent != null && !parent.name.ToLower().Contains("panel"))
+                {
+                    parent = parent.parent;
+                }
+                
+                if (parent != null)
+                {
+                    RectTransform panelRect = parent.GetComponent<RectTransform>();
+                    if (panelRect != null)
+                    {
+                        // Ensure slider fits within panel
+                        Vector2 currentPos = sliderRect.anchoredPosition;
+                        Vector2 currentSize = sliderRect.sizeDelta;
+                        Vector2 panelSize = panelRect.sizeDelta;
+                        
+                        // Check if slider extends beyond panel boundaries
+                        float sliderLeft = currentPos.x - (currentSize.x / 2);
+                        float sliderRight = currentPos.x + (currentSize.x / 2);
+                        float panelLeft = -(panelSize.x / 2);
+                        float panelRight = panelSize.x / 2;
+                        
+                        // Adjust position if slider goes outside panel
+                        if (sliderRight > panelRight)
+                        {
+                            currentPos.x = panelRight - (currentSize.x / 2) - 10; // 10px margin
+                            sliderRect.anchoredPosition = currentPos;
+                            Debug.Log($"Adjusted {slider.name} position to fit in panel");
+                        }
+                        else if (sliderLeft < panelLeft)
+                        {
+                            currentPos.x = panelLeft + (currentSize.x / 2) + 10; // 10px margin
+                            sliderRect.anchoredPosition = currentPos;
+                            Debug.Log($"Adjusted {slider.name} position to fit in panel");
+                        }
+                    }
+                }
             }
         }
     }

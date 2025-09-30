@@ -8,6 +8,13 @@ public class SimpleTungTungAnimator : MonoBehaviour
     public float breathingAmount = 0.02f;
     public float jumpHeight = 0.3f;
     public float jumpDuration = 0.5f;
+    public float spinDuration = 1.0f;
+    
+    [Header("Audio Settings")]
+    public AudioSource audioSource;
+    public AudioClip jumpSound;
+    public AudioClip spinSound;
+    public AudioClip selectSound;
     
     private Vector3 originalPosition;
     private Vector3 originalScale;
@@ -19,6 +26,17 @@ public class SimpleTungTungAnimator : MonoBehaviour
         originalPosition = transform.position;
         originalScale = transform.localScale;
         originalRotation = transform.rotation;
+        
+        // Get or create AudioSource component
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        
         StartCoroutine(SimpleBreathingAnimation());
     }
     
@@ -45,15 +63,36 @@ public class SimpleTungTungAnimator : MonoBehaviour
     
     public void PlayJumping()
     {
-        StartCoroutine(QuickJump());
+        PlaySound(jumpSound);
+        StartCoroutine(SimpleJump());
     }
     
-    IEnumerator QuickJump()
+    public void PlaySpin()
+    {
+        PlaySound(spinSound);
+        StartCoroutine(Simple360Spin());
+    }
+    
+    public void PlaySelectionSound()
+    {
+        PlaySound(selectSound);
+    }
+    
+    void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
+    }
+    
+    IEnumerator SimpleJump()
     {
         Vector3 startPos = transform.position;
         Vector3 jumpPos = startPos + Vector3.up * jumpHeight;
         float elapsed = 0f;
         
+        // Jump up
         while (elapsed < jumpDuration / 2)
         {
             float progress = elapsed / (jumpDuration / 2);
@@ -62,6 +101,7 @@ public class SimpleTungTungAnimator : MonoBehaviour
             yield return null;
         }
         
+        // Jump down
         elapsed = 0f;
         while (elapsed < jumpDuration / 2)
         {
@@ -72,6 +112,23 @@ public class SimpleTungTungAnimator : MonoBehaviour
         }
         
         transform.position = originalPosition;
+    }
+    
+    IEnumerator Simple360Spin()
+    {
+        float elapsed = 0f;
+        Quaternion startRotation = transform.rotation;
+        
+        while (elapsed < spinDuration)
+        {
+            float progress = elapsed / spinDuration;
+            float currentRotation = progress * 360f;
+            transform.rotation = startRotation * Quaternion.Euler(0, currentRotation, 0);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        transform.rotation = originalRotation;
     }
     
     IEnumerator SimpleBreath()
@@ -116,7 +173,7 @@ public class SimpleTungTungAnimator : MonoBehaviour
         PlayJumping();
     }
     
-    // Method expected by SessionManager
+    // Method expected by SessionManager  
     public void OnStopButtonPressed()
     {
         PlayJumping();
@@ -125,16 +182,25 @@ public class SimpleTungTungAnimator : MonoBehaviour
     // Method expected by SessionManager
     public void CelebrateSessionComplete()
     {
-        StartCoroutine(CelebrationSequence());
+        PlaySpin(); // Simple 360 spin when session is complete
     }
     
-    IEnumerator CelebrationSequence()
+    // Context menu methods for testing
+    [ContextMenu("Test Jump")]
+    void TestJump()
     {
-        // Do multiple jumps for celebration
-        for (int i = 0; i < 3; i++)
-        {
-            yield return StartCoroutine(QuickJump());
-            yield return new WaitForSeconds(0.2f);
-        }
+        PlayJumping();
+    }
+    
+    [ContextMenu("Test Spin")]
+    void TestSpin()
+    {
+        PlaySpin();
+    }
+    
+    [ContextMenu("Test Breathing")]
+    void TestBreathing()
+    {
+        PlayBreathing();
     }
 }

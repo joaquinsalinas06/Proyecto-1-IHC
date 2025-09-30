@@ -7,6 +7,13 @@ public class SimpleCapybaraAnimator : MonoBehaviour
     public float breathingAmount = 0.02f;
     public float jumpHeight = 0.3f;
     public float jumpDuration = 0.5f;
+    
+    [Header("Audio Settings")]
+    public AudioSource audioSource;
+    public AudioClip jumpSound;
+    public AudioClip spinSound;
+    public AudioClip selectSound;
+    
     private Vector3 originalPosition;
     private Vector3 originalScale;
     private Quaternion originalRotation;
@@ -16,6 +23,17 @@ public class SimpleCapybaraAnimator : MonoBehaviour
         originalPosition = transform.position;
         originalScale = transform.localScale;
         originalRotation = transform.rotation;
+        
+        // Get or create AudioSource component
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        
         StartCoroutine(SimpleBreathingAnimation());
     }
     IEnumerator SimpleBreathingAnimation()

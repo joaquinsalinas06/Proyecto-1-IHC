@@ -29,6 +29,12 @@ public class SessionManager : MonoBehaviour
     [Header("Character Scaling")]
     public float characterScaleMultiplier = 1f;
 
+    [Header("Background Music")]
+    public AudioClip backgroundMusic;
+    public AudioClip sessionCompleteMusic;
+    [Range(0f, 1f)]
+    public float musicVolume = 0.3f;
+    private AudioSource musicAudioSource;
 
     [Header("Progress Bar Colors")]
     public Color progressStartColor = Color.green;
@@ -49,7 +55,7 @@ public class SessionManager : MonoBehaviour
     [Header("Session Settings")]
     [Tooltip("If checked, uses fixed Inspector values. If unchecked, uses slider values.")]
     public bool useFixedValues = false;
-    public float sessionDuration = 1500f;
+    public float sessionDuration = 60f;
     public float breakDuration = 300f;
     [Header("Time Selection Ranges")]
     public float minStudyTime = 600f;
@@ -80,7 +86,6 @@ public class SessionManager : MonoBehaviour
     private Coroutine automaticPhraseCoroutine;
     private float lastPhraseTime;
     private string initialMessage = "Prepárate para tu sesión de productividad";
-    private string instructionsMessage = "Toca el texto para cambiar frases durante la sesión";
     
     [Header("Motivational Phrases")]
     private string[] idlePhrases = {
@@ -157,23 +162,131 @@ public class SessionManager : MonoBehaviour
     private string[] currentPhraseSet;
     void Start()
     {
-        phraseText.text = initialMessage;
-        instructionsText.text = instructionsMessage;
-        SetupTimeSelectionUI();
+        Debug.Log("SessionManager Start() beginning...");
+        
+        // Check for null references before using them
+        if (phraseText != null)
+        {
+            phraseText.text = initialMessage;
+            Debug.Log("PhraseText initialized");
+        }
+        else
+        {
+            Debug.LogError("PhraseText is null! Please assign it in the Inspector.");
+        }
+        
+        if (instructionsText != null)
+        {
+            instructionsText.text = "Instrucciones";
+            Debug.Log("InstructionsText initialized");
+        }
+        else
+        {
+            Debug.LogError("InstructionsText is null! Please assign it in the Inspector.");
+        }
+        
+        try
+        {
+            SetupTimeSelectionUI();
+            Debug.Log("TimeSelectionUI setup complete");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in SetupTimeSelectionUI: {e.Message}");
+        }
+        
         originalSessionDuration = sessionDuration;
         currentTime = sessionDuration;
-        UpdateTimerDisplay();
-        UpdateProgressBar();
-        InitializeCharacters();
-        SetupCharacterDropdown();
-        SetPhraseSet(idlePhrases);
-        UpdateButtonStates();
-        Button textButton = phraseText.GetComponent<Button>();
-        if (textButton == null)
+        
+        try
         {
-            textButton = phraseText.gameObject.AddComponent<Button>();
+            UpdateTimerDisplay();
+            Debug.Log("Timer display updated");
         }
-        textButton.onClick.AddListener(OnTextClicked);
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in UpdateTimerDisplay: {e.Message}");
+        }
+        
+        try
+        {
+            UpdateProgressBar();
+            Debug.Log("Progress bar updated");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in UpdateProgressBar: {e.Message}");
+        }
+        try
+        {
+            InitializeCharacters();
+            Debug.Log("Characters initialized");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in InitializeCharacters: {e.Message}");
+        }
+        
+        try
+        {
+            SetupCharacterDropdown();
+            Debug.Log("Character dropdown setup complete");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in SetupCharacterDropdown: {e.Message}");
+        }
+        
+        try
+        {
+            SetPhraseSet(idlePhrases);
+            Debug.Log("Phrase set configured");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in SetPhraseSet: {e.Message}");
+        }
+        
+        try
+        {
+            SetupBackgroundMusic();
+            Debug.Log("Background music setup complete");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in SetupBackgroundMusic: {e.Message}");
+        }
+        
+        try
+        {
+            UpdateButtonStates();
+            Debug.Log("Button states updated");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error in UpdateButtonStates: {e.Message}");
+        }
+        
+        // Setup text button for phrase clicking
+        try
+        {
+            if (phraseText != null)
+            {
+                Button textButton = phraseText.GetComponent<Button>();
+                if (textButton == null)
+                {
+                    textButton = phraseText.gameObject.AddComponent<Button>();
+                }
+                textButton.onClick.AddListener(OnTextClicked);
+                Debug.Log("Text button setup complete");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error setting up text button: {e.Message}");
+        }
+        
+        Debug.Log("SessionManager Start() completed successfully!");
     }
     
     void SetPhraseSet(string[] newPhraseSet)
@@ -427,6 +540,33 @@ public class SessionManager : MonoBehaviour
             }
         }
     }
+    
+    public void OnCharacterClicked()
+    {
+        Debug.Log($"OnCharacterClicked called! isRunning: {isRunning}, isBreakTime: {isBreakTime}");
+        // Same functionality as OnTextClicked - change phrase when character is touched
+        if (isRunning && !isBreakTime)
+        {
+            Debug.Log("Changing phrase from character click...");
+            NextPhrase();
+            string currentPhrase = currentPhraseSet != null && currentPhraseSet.Length > 0 ? currentPhraseSet[currentPhraseIndex] : "";
+            phraseText.text = currentPhrase;
+            Debug.Log($"New phrase: {currentPhrase}");
+            ShowSpeechBubble(currentPhrase);
+            if (capybaraAnimator != null && capybaraGameObject != null && capybaraGameObject.activeInHierarchy)
+            {
+                capybaraAnimator.ReactToPhrase(currentPhrase);
+            }
+            if (tungTungAnimator != null && tungTungGameObject != null && tungTungGameObject.activeInHierarchy)
+            {
+                tungTungAnimator.ReactToPhrase(currentPhrase);
+            }
+        }
+        else
+        {
+            Debug.Log($"Character click ignored - Session not active or in break time");
+        }
+    }
     void ShowNextAutomaticPhrase()
     {
         if (!isRunning || isBreakTime) return;
@@ -511,7 +651,7 @@ public class SessionManager : MonoBehaviour
         resetConfirmationTime = Time.time;
         var buttonText = resetButton.GetComponentInChildren<TextMeshProUGUI>();
         buttonText.text = "¿Confirmar?";
-        instructionsText.text = "Presiona 'Confirmar' nuevamente para reiniciar";
+        instructionsText.text = "Instrucciones";
     }
     void CancelResetConfirmation()
     {
@@ -520,12 +660,8 @@ public class SessionManager : MonoBehaviour
         buttonText.text = "Reiniciar";
         if (isRunning)
         {
-            instructionsText.text = "Toca el texto para cambiar la frase motivacional";
         }
-        else
-        {
-            instructionsText.text = instructionsMessage;
-        }
+        instructionsText.text = "Instrucciones";
     }
     void ConfirmReset()
     {
@@ -535,7 +671,7 @@ public class SessionManager : MonoBehaviour
         originalSessionDuration = sessionDuration;
         SetPhraseSet(idlePhrases);
         ShowRandomPhraseFromSet(idlePhrases);
-        instructionsText.text = instructionsMessage;
+        instructionsText.text = "Instrucciones";
         CancelResetConfirmation();
         UpdateButtonStates();
         UpdateProgressBar();
@@ -549,7 +685,7 @@ public class SessionManager : MonoBehaviour
             currentTime = breakDuration;
             originalSessionDuration = breakDuration;
             phraseText.text = "¡Sesión completada! Tiempo de descanso";
-            instructionsText.text = "Disfruta tu merecido descanso";
+            instructionsText.text = "Instrucciones";
             if (isCapybaraActive)
                 ShowSpeechBubbleFromCharacter("Misión cumplida. Ahora es momento de paz y tranquilidad.", "capybara");
             else
@@ -583,7 +719,7 @@ public class SessionManager : MonoBehaviour
             currentTime = sessionDuration;
             originalSessionDuration = sessionDuration;
             phraseText.text = "¡Descanso terminado! Nueva sesión";
-            instructionsText.text = instructionsMessage;
+            instructionsText.text = "Instrucciones";
             if (isCapybaraActive)
                 ShowSpeechBubbleFromCharacter("Comencemos de nuevo con mente clara y serena.", "capybara");
             else
@@ -666,9 +802,7 @@ public class SessionManager : MonoBehaviour
         
         ShowRandomPhraseFromSet(startPhrases);
         
-        instructionsText.text = showPhrasesAutomatically ? 
-            "Las frases aparecerán automáticamente. Toca para cambiar manualmente." : 
-            "Toca el texto para cambiar la frase motivacional";
+        instructionsText.text = "Instrucciones";
             
         if (capybaraAnimator != null && capybaraGameObject != null && capybaraGameObject.activeInHierarchy)
         {
@@ -698,32 +832,80 @@ public class SessionManager : MonoBehaviour
     }
     public void ShowCapybara()
     {
+        Debug.Log("ShowCapybara() called");
         if (capybaraGameObject != null)
         {
             capybaraGameObject.SetActive(true);
+            Debug.Log($"Capybara activated: {capybaraGameObject.name}");
         }
+        else
+        {
+            Debug.LogWarning("CapybaraGameObject is null!");
+        }
+        
         if (tungTungGameObject != null)
         {
             tungTungGameObject.SetActive(false);
+            Debug.Log($"TungTung deactivated: {tungTungGameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning("TungTungGameObject is null!");
         }
     }
     public void ShowTungTung()
     {
+        Debug.Log("ShowTungTung() called");
         if (capybaraGameObject != null)
         {
             capybaraGameObject.SetActive(false);
+            Debug.Log($"Capybara deactivated: {capybaraGameObject.name}");
         }
         else
         {
+            Debug.LogWarning("CapybaraGameObject is null!");
         }
+        
         if (tungTungGameObject != null)
         {
             tungTungGameObject.SetActive(true);
+            Debug.Log($"TungTung activated: {tungTungGameObject.name}");
             if (tungTungAnimator != null)
             {
             }
         }
     }
+    
+    [ContextMenu("Fix Character Display")]
+    public void FixCharacterDisplay()
+    {
+        Debug.Log("=== Fixing Character Display ===");
+        Debug.Log($"startWithCapybara: {startWithCapybara}");
+        Debug.Log($"isCapybaraActive: {isCapybaraActive}");
+        
+        if (capybaraGameObject != null)
+        {
+            Debug.Log($"Capybara GameObject: {capybaraGameObject.name}, Active: {capybaraGameObject.activeInHierarchy}");
+        }
+        
+        if (tungTungGameObject != null)
+        {
+            Debug.Log($"TungTung GameObject: {tungTungGameObject.name}, Active: {tungTungGameObject.activeInHierarchy}");
+        }
+        
+        // Force the correct character to show
+        if (startWithCapybara)
+        {
+            ShowCapybara();
+        }
+        else
+        {
+            ShowTungTung();
+        }
+        
+        Debug.Log("=== Character Display Fixed ===");
+    }
+    
     [ContextMenu("Test Switch to Capybara")]
     public void TestSwitchToCapybara()
     {
@@ -740,11 +922,53 @@ public class SessionManager : MonoBehaviour
         {
             characterDropdown.onValueChanged.RemoveAllListeners();
             characterDropdown.onValueChanged.AddListener(OnCharacterChanged);
+            
+            // Fix dropdown text sizing for mobile
+            FixDropdownTextSizing();
         }
         else
         {
         }
     }
+
+    void FixDropdownTextSizing()
+    {
+        if (characterDropdown == null) return;
+        
+        // Fix the label text (currently selected option)
+        if (characterDropdown.captionText != null)
+        {
+            var labelText = characterDropdown.captionText;
+            labelText.enableAutoSizing = true;
+            labelText.fontSizeMin = 8f;
+            labelText.fontSizeMax = 20f;
+            labelText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+            labelText.enableWordWrapping = false;
+        }
+        
+        // Fix the template text (dropdown items)
+        if (characterDropdown.template != null)
+        {
+            var itemText = characterDropdown.template.GetComponentInChildren<TextMeshProUGUI>();
+            if (itemText != null)
+            {
+                itemText.enableAutoSizing = true;
+                itemText.fontSizeMin = 8f;
+                itemText.fontSizeMax = 18f;
+                itemText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+                itemText.enableWordWrapping = false;
+            }
+        }
+    }
+    
+    void SetupBackgroundMusic()
+    {
+        if (backgroundMusic != null && BackgroundMusicManager.Instance != null)
+        {
+            BackgroundMusicManager.Instance.PlayMusic(backgroundMusic);
+        }
+    }
+    
     [ContextMenu("Auto Find Character GameObjects")]
     public void AutoFindCharacterGameObjects()
     {
@@ -804,12 +1028,17 @@ public class SessionManager : MonoBehaviour
         {
         }
         ApplyCharacterScaling();
+        
+        // Force proper character selection - ensure only one is active
+        Debug.Log($"Initializing characters - startWithCapybara: {startWithCapybara}");
         if (startWithCapybara)
         {
+            Debug.Log("Showing Capybara, hiding TungTung");
             ShowCapybara();
         }
         else
         {
+            Debug.Log("Showing TungTung, hiding Capybara");
             ShowTungTung();
         }
     }
