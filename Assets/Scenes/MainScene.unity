@@ -484,13 +484,25 @@ MonoBehaviour:
   m_FillRect: {fileID: 1084749268}
   m_HandleRect: {fileID: 671559434}
   m_Direction: 0
-  m_MinValue: 5
-  m_MaxValue: 30
+  m_MinValue: 6
+  m_MaxValue: 360
   m_WholeNumbers: 1
-  m_Value: 5
+  m_Value: 6
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1786762191}
+        m_TargetAssemblyTypeName: SessionManager, Assembly-CSharp
+        m_MethodName: OnBreakTimeChanged
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &158773927
 GameObject:
   m_ObjectHideFlags: 0
@@ -3562,13 +3574,25 @@ MonoBehaviour:
   m_FillRect: {fileID: 93376928}
   m_HandleRect: {fileID: 1717608312}
   m_Direction: 0
-  m_MinValue: 1
-  m_MaxValue: 60
+  m_MinValue: 30
+  m_MaxValue: 1800
   m_WholeNumbers: 1
-  m_Value: 1
+  m_Value: 30
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1786762191}
+        m_TargetAssemblyTypeName: SessionManager, Assembly-CSharp
+        m_MethodName: OnStudyTimeChanged
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1283908538
 GameObject:
   m_ObjectHideFlags: 0
@@ -4740,10 +4764,10 @@ MonoBehaviour:
   useFixedValues: 0
   sessionDuration: 1500
   breakDuration: 300
-  minStudyTime: 600
-  maxStudyTime: 3600
-  minBreakTime: 300
-  maxBreakTime: 1800
+  minStudyTime: 30
+  maxStudyTime: 1800
+  minBreakTime: 6
+  maxBreakTime: 360
 --- !u!1 &1881970881
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Linq;
 public class SessionManager : MonoBehaviour
 {
     [Header("UI Elements")]
@@ -55,13 +56,13 @@ public class SessionManager : MonoBehaviour
     [Header("Session Settings")]
     [Tooltip("If checked, uses fixed Inspector values. If unchecked, uses slider values.")]
     public bool useFixedValues = false;
-    public float sessionDuration = 60f;
-    public float breakDuration = 300f;
+    public float sessionDuration = 60f;    // Valor inicial: 1 minuto
+    public float breakDuration = 30f;      // Valor inicial: 30 segundos (0.5 min)
     [Header("Time Selection Ranges")]
-    public float minStudyTime = 600f;
-    public float maxStudyTime = 3600f;
-    public float minBreakTime = 300f;
-    public float maxBreakTime = 1800f;
+    public float minStudyTime = 30f;      // 30 segundos (0.5 min)
+    public float maxStudyTime = 1800f;    // 30 minutos
+    public float minBreakTime = 6f;       // 6 segundos (0.1 min)
+    public float maxBreakTime = 360f;     // 6 minutos
     private float currentTime;
     private float originalSessionDuration;
     private bool isRunning = false;
@@ -195,6 +196,9 @@ public class SessionManager : MonoBehaviour
         {
             Debug.LogError($"Error in SetupTimeSelectionUI: {e.Message}");
         }
+
+        // Aplicar estilo después de un frame para asegurar que todo esté inicializado
+        StartCoroutine(ApplyStyleAfterDelay());
         
         originalSessionDuration = sessionDuration;
         currentTime = sessionDuration;
@@ -337,41 +341,64 @@ public class SessionManager : MonoBehaviour
     {
         if (studyTimeSlider != null)
         {
-            studyTimeSlider.minValue = minStudyTime / 60f;
-            studyTimeSlider.maxValue = maxStudyTime / 60f;
-            studyTimeSlider.value = sessionDuration / 60f;
+            // Configurar slider de estudio: 30 segundos a 30 minutos (en segundos)
+            studyTimeSlider.minValue = minStudyTime;        // 30 segundos
+            studyTimeSlider.maxValue = maxStudyTime;        // 1800 segundos (30 min)
+
+            // Asegurar que el valor inicial esté dentro del rango
+            float initialStudyValue = Mathf.Clamp(sessionDuration, minStudyTime, maxStudyTime);
+            studyTimeSlider.value = initialStudyValue;
+
             studyTimeSlider.wholeNumbers = true;
             studyTimeSlider.onValueChanged.AddListener(OnStudyTimeChanged);
             if (!useFixedValues)
             {
                 OnStudyTimeChanged(studyTimeSlider.value);
             }
+
+            Debug.Log($"Study slider configurado: min={minStudyTime}, max={maxStudyTime}, value={studyTimeSlider.value}");
+
+            // Forzar actualización inmediata del slider
+            studyTimeSlider.minValue = minStudyTime;
+            studyTimeSlider.maxValue = maxStudyTime;
         }
         else
         {
         }
         if (breakTimeSlider != null)
         {
-            breakTimeSlider.minValue = minBreakTime / 60f;
-            breakTimeSlider.maxValue = maxBreakTime / 60f;
-            breakTimeSlider.value = breakDuration / 60f;
+            // Configurar slider de descanso: 10 segundos a 10 minutos (en segundos)
+            breakTimeSlider.minValue = minBreakTime;        // 10 segundos
+            breakTimeSlider.maxValue = maxBreakTime;        // 600 segundos (10 min)
+
+            // Asegurar que el valor inicial esté dentro del rango
+            float initialBreakValue = Mathf.Clamp(breakDuration, minBreakTime, maxBreakTime);
+            breakTimeSlider.value = initialBreakValue;
+
             breakTimeSlider.wholeNumbers = true;
             breakTimeSlider.onValueChanged.AddListener(OnBreakTimeChanged);
             if (!useFixedValues)
             {
                 OnBreakTimeChanged(breakTimeSlider.value);
             }
+
+            Debug.Log($"Break slider configurado: min={minBreakTime}, max={maxBreakTime}, value={breakTimeSlider.value}");
+
+            // Forzar actualización inmediata del slider
+            breakTimeSlider.minValue = minBreakTime;
+            breakTimeSlider.maxValue = maxBreakTime;
         }
         else
         {
         }
         UpdateTimeSelectionDisplay();
     }
-    public void OnStudyTimeChanged(float minutes)
+    public void OnStudyTimeChanged(float seconds)
     {
+        Debug.Log($"OnStudyTimeChanged llamado con {seconds} segundos");
         if (!useFixedValues)
         {
-            sessionDuration = minutes * 60f;
+            sessionDuration = seconds;
             originalSessionDuration = sessionDuration;
             if (!isRunning)
             {
@@ -382,11 +409,13 @@ public class SessionManager : MonoBehaviour
         }
         UpdateTimeSelectionDisplay();
     }
-    public void OnBreakTimeChanged(float minutes)
+
+    public void OnBreakTimeChanged(float seconds)
     {
+        Debug.Log($"OnBreakTimeChanged llamado con {seconds} segundos");
         if (!useFixedValues)
         {
-            breakDuration = minutes * 60f;
+            breakDuration = seconds;
         }
         UpdateTimeSelectionDisplay();
     }
@@ -394,19 +423,53 @@ public class SessionManager : MonoBehaviour
     {
         if (studyTimeValue != null && studyTimeSlider != null)
         {
-            studyTimeValue.text = $"{(int)studyTimeSlider.value} min";
+            float timeInSeconds = studyTimeSlider.value; // El slider ya está en segundos
+            if (timeInSeconds < 60f)
+            {
+                studyTimeValue.text = $"{(int)timeInSeconds} seg";
+            }
+            else
+            {
+                float minutes = timeInSeconds / 60f;
+                // Para múltiplos de 30 segundos, mostrar con decimales limpios
+                if (timeInSeconds % 30 == 0)
+                {
+                    studyTimeValue.text = $"{minutes:0.#} min";
+                }
+                else
+                {
+                    studyTimeValue.text = $"{(int)minutes} min";
+                }
+            }
         }
         if (breakTimeValue != null && breakTimeSlider != null)
         {
-            breakTimeValue.text = $"{(int)breakTimeSlider.value} min";
+            float timeInSeconds = breakTimeSlider.value; // El slider ya está en segundos
+            if (timeInSeconds < 60f)
+            {
+                breakTimeValue.text = $"{(int)timeInSeconds} seg";
+            }
+            else
+            {
+                float minutes = timeInSeconds / 60f;
+                // Para múltiplos de 6 segundos, mostrar con decimales limpios
+                if (timeInSeconds % 6 == 0)
+                {
+                    breakTimeValue.text = $"{minutes:0.#} min";
+                }
+                else
+                {
+                    breakTimeValue.text = $"{(int)minutes} min";
+                }
+            }
         }
         if (studyTimeLabel != null)
         {
-            studyTimeLabel.text = "Tiempo De Estudio";
+            studyTimeLabel.text = "TIEMPO DE\nESTUDIO";
         }
         if (breakTimeLabel != null)
         {
-            breakTimeLabel.text = "Tiempo De Descanso";
+            breakTimeLabel.text = "TIEMPO DE\nDESCANSO";
         }
     }
     [ContextMenu("Toggle Time Selection Panel")]
@@ -441,7 +504,244 @@ public class SessionManager : MonoBehaviour
             var panelImage = timeSelectionPanel.GetComponent<Image>();
             if (panelImage != null)
             {
-                panelImage.color = new Color(0.95f, 0.95f, 0.95f, 0.9f);
+                // Cambiar a gris oscuro
+                panelImage.color = new Color(0.2f, 0.2f, 0.2f, 0.9f);
+            }
+
+            // Mejorar el layout y espaciado
+            ImproveTimeSelectionLayout();
+
+            // Forzar centrado de elementos
+            CenterTimeSelectionElements();
+        }
+    }
+
+    void ImproveTimeSelectionLayout()
+    {
+        if (timeSelectionPanel == null)
+        {
+            Debug.LogError("timeSelectionPanel is NULL!");
+            return;
+        }
+
+        Debug.Log("=== MEJORANDO LAYOUT DEL PANEL DE TIEMPO ===");
+
+        // Buscar elementos automáticamente dentro del panel
+        Debug.Log("Buscando elementos de UI en el panel...");
+
+        if (studyTimeLabel == null)
+        {
+            studyTimeLabel = timeSelectionPanel.GetComponentsInChildren<TMPro.TextMeshProUGUI>()
+                .FirstOrDefault(x => x.name.Contains("StudyTimeLabel") || x.name.Contains("Label"));
+            Debug.Log($"Auto-found studyTimeLabel: {studyTimeLabel?.name ?? "NULL"}");
+        }
+        if (breakTimeLabel == null)
+        {
+            breakTimeLabel = timeSelectionPanel.GetComponentsInChildren<TMPro.TextMeshProUGUI>()
+                .FirstOrDefault(x => x.name.Contains("BreakTimeLabel") || (x.name.Contains("Label") && !x.name.Contains("Study")));
+            Debug.Log($"Auto-found breakTimeLabel: {breakTimeLabel?.name ?? "NULL"}");
+        }
+        if (studyTimeValue == null)
+        {
+            studyTimeValue = timeSelectionPanel.GetComponentsInChildren<TMPro.TextMeshProUGUI>()
+                .FirstOrDefault(x => x.name.Contains("StudyTimeValue") || (x.name.Contains("Value") && x.name.Contains("Study")));
+            Debug.Log($"Auto-found studyTimeValue: {studyTimeValue?.name ?? "NULL"}");
+        }
+        if (breakTimeValue == null)
+        {
+            breakTimeValue = timeSelectionPanel.GetComponentsInChildren<TMPro.TextMeshProUGUI>()
+                .FirstOrDefault(x => x.name.Contains("BreakTimeValue") || (x.name.Contains("Value") && x.name.Contains("Break")));
+            Debug.Log($"Auto-found breakTimeValue: {breakTimeValue?.name ?? "NULL"}");
+        }
+        if (studyTimeSlider == null)
+        {
+            studyTimeSlider = timeSelectionPanel.GetComponentsInChildren<Slider>()
+                .FirstOrDefault(x => x.name.Contains("StudyTimeSlider") || x.name.Contains("Study"));
+            Debug.Log($"Auto-found studyTimeSlider: {studyTimeSlider?.name ?? "NULL"}");
+        }
+        if (breakTimeSlider == null)
+        {
+            breakTimeSlider = timeSelectionPanel.GetComponentsInChildren<Slider>()
+                .FirstOrDefault(x => x.name.Contains("BreakTimeSlider") || (x.name.Contains("Slider") && !x.name.Contains("Study")));
+            Debug.Log($"Auto-found breakTimeSlider: {breakTimeSlider?.name ?? "NULL"}");
+        }
+
+        // Listar todos los elementos TextMeshPro y Sliders para debug
+        Debug.Log("=== LISTANDO TODOS LOS ELEMENTOS ===");
+        var allTexts = timeSelectionPanel.GetComponentsInChildren<TMPro.TextMeshProUGUI>();
+        foreach (var text in allTexts)
+        {
+            Debug.Log($"TextMeshPro encontrado: {text.name} - Texto: '{text.text}'");
+        }
+        var allSliders = timeSelectionPanel.GetComponentsInChildren<Slider>();
+        foreach (var slider in allSliders)
+        {
+            Debug.Log($"Slider encontrado: {slider.name}");
+        }
+
+        // DESHABILITAR COMPONENTES QUE SOBRESCRIBEN TAMAÑOS
+        Debug.Log("=== DESHABILITANDO LAYOUT COMPONENTS ===");
+
+        // Deshabilitar Content Size Fitters que podrían estar controlando el tamaño
+        var contentSizeFitters = timeSelectionPanel.GetComponentsInChildren<UnityEngine.UI.ContentSizeFitter>();
+        foreach (var fitter in contentSizeFitters)
+        {
+            Debug.Log($"Deshabilitando ContentSizeFitter en: {fitter.gameObject.name}");
+            fitter.enabled = false;
+        }
+
+        // Deshabilitar temporalmente Layout Groups que controlan tamaños
+        var layoutGroups = timeSelectionPanel.GetComponentsInChildren<UnityEngine.UI.LayoutGroup>();
+        foreach (var layoutGroup in layoutGroups)
+        {
+            Debug.Log($"Configurando LayoutGroup en: {layoutGroup.gameObject.name}");
+            if (layoutGroup is UnityEngine.UI.HorizontalLayoutGroup hLayout)
+            {
+                hLayout.childControlWidth = false;
+                hLayout.childControlHeight = false;
+            }
+            else if (layoutGroup is UnityEngine.UI.VerticalLayoutGroup vLayout)
+            {
+                vLayout.childControlWidth = false;
+                vLayout.childControlHeight = false;
+            }
+        }
+
+        // Mejorar los textos de los labels - aumentar tamaño
+        if (studyTimeLabel != null)
+        {
+            Debug.Log($"Configurando studyTimeLabel: {studyTimeLabel.name}");
+
+            // Forzar configuración múltiple
+            studyTimeLabel.fontSize = 50f;  // Extra grande
+            studyTimeLabel.color = Color.white;
+            studyTimeLabel.alignment = TMPro.TextAlignmentOptions.Center;
+            studyTimeLabel.enableWordWrapping = true;
+            studyTimeLabel.text = "TIEMPO DE\nESTUDIO";
+
+            // Forzar actualización inmediata
+            studyTimeLabel.ForceMeshUpdate();
+
+            Debug.Log($"StudyTimeLabel configurado - FontSize: {studyTimeLabel.fontSize}");
+        }
+        else
+        {
+            Debug.LogError("studyTimeLabel is NULL even after auto-search!");
+        }
+
+        if (breakTimeLabel != null)
+        {
+            Debug.Log($"Configurando breakTimeLabel: {breakTimeLabel.name}");
+
+            breakTimeLabel.fontSize = 50f;  // Extra grande
+            breakTimeLabel.color = Color.white;
+            breakTimeLabel.alignment = TMPro.TextAlignmentOptions.Center;
+            breakTimeLabel.enableWordWrapping = true;
+            breakTimeLabel.text = "TIEMPO DE\nDESCANSO";
+
+            // Forzar actualización inmediata
+            breakTimeLabel.ForceMeshUpdate();
+
+            Debug.Log($"BreakTimeLabel configurado - FontSize: {breakTimeLabel.fontSize}");
+        }
+        else
+        {
+            Debug.LogError("breakTimeLabel is NULL even after auto-search!");
+        }
+
+        // Mejorar los textos de los valores - aumentar tamaño
+        if (studyTimeValue != null)
+        {
+            Debug.Log($"Configurando studyTimeValue: {studyTimeValue.name}");
+
+            studyTimeValue.fontSize = 40f;  // Extra súper grande
+            studyTimeValue.color = new Color(1f, 0.9f, 0.2f, 1f); // Amarillo como acento
+            studyTimeValue.alignment = TMPro.TextAlignmentOptions.Center;
+
+            // Forzar actualización inmediata
+            studyTimeValue.ForceMeshUpdate();
+
+            Debug.Log($"StudyTimeValue configurado - FontSize: {studyTimeValue.fontSize}");
+        }
+        else
+        {
+            Debug.LogError("studyTimeValue is NULL even after auto-search!");
+        }
+
+        if (breakTimeValue != null)
+        {
+            Debug.Log($"Configurando breakTimeValue: {breakTimeValue.name}");
+
+            breakTimeValue.fontSize = 40f;  // Extra súper grande
+            breakTimeValue.color = new Color(1f, 0.9f, 0.2f, 1f); // Amarillo como acento
+            breakTimeValue.alignment = TMPro.TextAlignmentOptions.Center;
+
+            // Forzar actualización inmediata
+            breakTimeValue.ForceMeshUpdate();
+
+            Debug.Log($"BreakTimeValue configurado - FontSize: {breakTimeValue.fontSize}");
+        }
+        else
+        {
+            Debug.LogError("breakTimeValue is NULL even after auto-search!");
+        }
+
+        // Mejorar los sliders
+        if (studyTimeSlider != null)
+        {
+            var sliderImage = studyTimeSlider.GetComponent<Image>();
+            if (sliderImage != null)
+            {
+                sliderImage.color = new Color(0.3f, 0.3f, 0.3f, 1f); // Fondo del slider
+            }
+
+            // Mejorar el handle del slider
+            if (studyTimeSlider.handleRect != null)
+            {
+                var handleImage = studyTimeSlider.handleRect.GetComponent<Image>();
+                if (handleImage != null)
+                {
+                    handleImage.color = new Color(1f, 0.9f, 0.2f, 1f); // Amarillo
+                }
+            }
+
+            // Mejorar el fill del slider
+            if (studyTimeSlider.fillRect != null)
+            {
+                var fillImage = studyTimeSlider.fillRect.GetComponent<Image>();
+                if (fillImage != null)
+                {
+                    fillImage.color = new Color(0.8f, 0.7f, 0.2f, 1f); // Amarillo más oscuro
+                }
+            }
+        }
+
+        if (breakTimeSlider != null)
+        {
+            var sliderImage = breakTimeSlider.GetComponent<Image>();
+            if (sliderImage != null)
+            {
+                sliderImage.color = new Color(0.3f, 0.3f, 0.3f, 1f); // Fondo del slider
+            }
+
+            // Mejorar el handle del slider
+            if (breakTimeSlider.handleRect != null)
+            {
+                var handleImage = breakTimeSlider.handleRect.GetComponent<Image>();
+                if (handleImage != null)
+                {
+                    handleImage.color = new Color(1f, 0.9f, 0.2f, 1f); // Amarillo
+                }
+            }
+
+            // Mejorar el fill del slider
+            if (breakTimeSlider.fillRect != null)
+            {
+                var fillImage = breakTimeSlider.fillRect.GetComponent<Image>();
+                if (fillImage != null)
+                {
+                    fillImage.color = new Color(0.8f, 0.7f, 0.2f, 1f); // Amarillo más oscuro
+                }
             }
         }
     }
@@ -1027,7 +1327,86 @@ public class SessionManager : MonoBehaviour
             }
         }
     }
-    
+
+    void CenterTimeSelectionElements()
+    {
+        if (timeSelectionPanel == null) return;
+
+        // Buscar y configurar el Layout Group principal
+        var mainLayoutGroup = timeSelectionPanel.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+        if (mainLayoutGroup != null)
+        {
+            mainLayoutGroup.childControlWidth = true;
+            mainLayoutGroup.childControlHeight = false;
+            mainLayoutGroup.childForceExpandWidth = true;
+            mainLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+            mainLayoutGroup.spacing = 20f; // Espaciado entre columnas
+        }
+
+        // Configurar cada columna para que esté centrada
+        var columns = timeSelectionPanel.GetComponentsInChildren<UnityEngine.UI.VerticalLayoutGroup>();
+        foreach (var column in columns)
+        {
+            column.childControlWidth = true;
+            column.childControlHeight = false;
+            column.childForceExpandWidth = true;
+            column.childAlignment = TextAnchor.MiddleCenter;
+            column.spacing = 10f; // Espaciado vertical dentro de cada columna
+
+            // Asegurar padding uniforme
+            column.padding = new UnityEngine.RectOffset(10, 10, 10, 10);
+        }
+
+        // Forzar recalculo del layout
+        UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(timeSelectionPanel.GetComponent<RectTransform>());
+    }
+
+    IEnumerator ApplyStyleAfterDelay()
+    {
+        // Esperar 3 frames para asegurar que todo esté inicializado
+        yield return null;
+        yield return null;
+        yield return null;
+
+        Debug.Log("=== APLICANDO ESTILO CON DELAY ===");
+        StyleTimeSelectionPanel();
+
+        // Forzar configuración de sliders después del delay
+        ForceSliderConfiguration();
+
+        // Forzar actualización del display
+        UpdateTimeSelectionDisplay();
+
+        Debug.Log("=== ESTILO APLICADO COMPLETAMENTE ===");
+    }
+
+    void ForceSliderConfiguration()
+    {
+        Debug.Log("=== FORZANDO CONFIGURACION DE SLIDERS ===");
+
+        if (studyTimeSlider != null)
+        {
+            Debug.Log($"Antes - Study slider: min={studyTimeSlider.minValue}, max={studyTimeSlider.maxValue}, value={studyTimeSlider.value}");
+
+            studyTimeSlider.minValue = minStudyTime;  // 30 segundos
+            studyTimeSlider.maxValue = maxStudyTime;  // 1800 segundos
+            studyTimeSlider.value = Mathf.Max(minStudyTime, studyTimeSlider.value); // Asegurar que esté por encima del mínimo
+
+            Debug.Log($"Después - Study slider: min={studyTimeSlider.minValue}, max={studyTimeSlider.maxValue}, value={studyTimeSlider.value}");
+        }
+
+        if (breakTimeSlider != null)
+        {
+            Debug.Log($"Antes - Break slider: min={breakTimeSlider.minValue}, max={breakTimeSlider.maxValue}, value={breakTimeSlider.value}");
+
+            breakTimeSlider.minValue = minBreakTime;  // 6 segundos
+            breakTimeSlider.maxValue = maxBreakTime;  // 360 segundos
+            breakTimeSlider.value = Mathf.Max(minBreakTime, breakTimeSlider.value); // Asegurar que esté por encima del mínimo
+
+            Debug.Log($"Después - Break slider: min={breakTimeSlider.minValue}, max={breakTimeSlider.maxValue}, value={breakTimeSlider.value}");
+        }
+    }
+
     void SetupBackgroundMusic()
     {
         if (backgroundMusic != null && BackgroundMusicManager.Instance != null)
