@@ -85,77 +85,78 @@ public class SessionManager : MonoBehaviour
 
     private Coroutine automaticPhraseCoroutine;
     private float lastPhraseTime;
-    private string initialMessage = "Prepárate para tu sesión de productividad";
-    
+    private string initialMessage = "Preparate para tu sesion de productividad";
+    private string instructionsMessage = "Toca personaje o texto para nuevo mensaje!";
+
     [Header("Motivational Phrases")]
     private string[] idlePhrases = {
-        "Prepárate para ser productivo",
-        "Tu momento de enfoque está a punto de comenzar",
-        "Respira hondo y prepárate para concentrarte",
+        "Preparate para ser productivo",
+        "Tu momento de enfoque esta a punto de comenzar",
+        "Respira hondo y preparate para concentrarte",
         "Es hora de alcanzar tus metas",
-        "Cada sesión te acerca a tu objetivo",
-        "La productividad comienza con tu decisión",
-        "Estás a un paso de tu mejor versión",
+        "Cada sesion te acerca a tu objetivo",
+        "La productividad comienza con tu decision",
+        "Estas a un paso de tu mejor version",
         "El enfoque es tu superpoder secreto",
-        "Hoy es el día perfecto para ser productivo",
-        "Tu mente está lista para el desafío"
+        "Hoy es el dia perfecto para ser productivo",
+        "Tu mente esta lista para el desafio"
     };
     
     private string[] activePhrases = {
-        "¡Concéntrate al máximo!",
-        "¡Cada minuto cuenta!",
-        "¡Mantén la calma y sigue!",
-        "¡Mente clara, corazón firme!",
-        "¡Momento productivo en acción!",
-        "¡Respira profundo y continúa!",
-        "¡Estás en tu elemento!",
-        "¡El flujo está contigo!",
-        "¡Cada segundo es una victoria!",
-        "¡Tu enfoque es imparable!",
-        "¡Construyendo el éxito paso a paso!",
-        "¡La disciplina te está transformando!",
-        "¡Eres más fuerte que cualquier distracción!",
-        "¡El progreso se siente increíble!",
-        "¡Tu determinación es inspiradora!"
+        "Concentrate al maximo!",
+        "Cada minuto cuenta!",
+        "Manten la calma y sigue!",
+        "Mente clara, corazon firme!",
+        "Momento productivo en accion!",
+        "Respira profundo y continua!",
+        "Estas en tu elemento!",
+        "El flujo esta contigo!",
+        "Cada segundo es una victoria!",
+        "Tu enfoque es imparable!",
+        "Construyendo el exito paso a paso!",
+        "La disciplina te esta transformando!",
+        "Eres mas fuerte que cualquier distraccion!",
+        "El progreso se siente increible!",
+        "Tu determinacion es inspiradora!"
     };
     
     private string[] startPhrases = {
-        "¡Comienza tu jornada de productividad!",
-        "¡Es hora de brillar!",
-        "¡Vamos a hacer que este tiempo conte!",
-        "¡Tu sesión de enfoque ha comenzado!",
-        "¡A conquistar tus objetivos!",
-        "¡El momento perfecto es ahora!",
-        "¡Desata todo tu potencial!",
-        "¡La aventura productiva comienza!",
-        "¡Tiempo de hacer magia!",
-        "¡Tu zona de enfoque te espera!"
+        "Comienza tu jornada de productividad!",
+        "Es hora de brillar!",
+        "Vamos a hacer que este tiempo cuente!",
+        "Tu sesion de enfoque ha comenzado!",
+        "A conquistar tus objetivos!",
+        "El momento perfecto es ahora!",
+        "Desata todo tu potencial!",
+        "La aventura productiva comienza!",
+        "Tiempo de hacer magia!",
+        "Tu zona de enfoque te espera!"
     };
     
     private string[] pausePhrases = {
-        "Respira y recargas energías",
+        "Respira y recargas energias",
         "Un descanso merecido para tu mente",
-        "Pausa estratégica para volver más fuerte",
-        "Relájate, lo estás haciendo genial",
-        "Momento de calma y reflexión",
-        "Descansa para volver con más energía",
+        "Pausa estrategica para volver mas fuerte",
+        "Relajate, lo estas haciendo genial",
+        "Momento de calma y reflexion",
+        "Descansa para volver con mas energia",
         "Tu mente necesita este respiro",
         "Pausa sabia, regreso poderoso",
         "Recarga completa en proceso",
-        "El descanso también es productividad"
+        "El descanso tambien es productividad"
     };
     
     private string[] restartPhrases = {
-        "¡De vuelta a la acción!",
-        "¡Recargado y listo para más!",
-        "¡Segunda ronda, misma determinación!",
-        "¡Continúamos donde lo dejamos!",
-        "¡Renovado y enfocado!",
-        "¡El momentum regresa contigo!",
-        "¡Vuelta al flujo productivo!",
-        "¡Energía restaurada, objetivos claros!",
-        "¡Listos para la siguiente fase!",
-        "¡El enfoque nunca se fue, solo descansó!"
+        "De vuelta a la accion!",
+        "Recargado y listo para mas!",
+        "Segunda ronda, misma determinacion!",
+        "Continuamos donde lo dejamos!",
+        "Renovado y enfocado!",
+        "El momentum regresa contigo!",
+        "Vuelta al flujo productivo!",
+        "Energia restaurada, objetivos claros!",
+        "Listos para la siguiente fase!",
+        "El enfoque nunca se fue, solo descanso!"
     };
     
     private int currentPhraseIndex = 0;
@@ -174,10 +175,10 @@ public class SessionManager : MonoBehaviour
         {
             Debug.LogError("PhraseText is null! Please assign it in the Inspector.");
         }
-        
+
         if (instructionsText != null)
         {
-            instructionsText.text = "Instrucciones";
+            instructionsText.text = "Presiona INICIAR cuando estes listo";
             Debug.Log("InstructionsText initialized");
         }
         else
@@ -607,6 +608,7 @@ public class SessionManager : MonoBehaviour
         {
             SetPhraseSet(activePhrases);
             ShowRandomPhraseFromSet(restartPhrases);
+            instructionsText.text = instructionsMessage;
             if (capybaraAnimator != null && capybaraGameObject != null && capybaraGameObject.activeInHierarchy)
             {
                 capybaraAnimator.OnStartButtonPressed();
@@ -620,6 +622,7 @@ public class SessionManager : MonoBehaviour
         {
             SetPhraseSet(pausePhrases);
             ShowRandomPhraseFromSet(pausePhrases);
+            instructionsText.text = "Sesion en pausa - Respira y relajate";
             if (capybaraAnimator != null && capybaraGameObject != null && capybaraGameObject.activeInHierarchy)
             {
                 capybaraAnimator.OnStopButtonPressed();
@@ -650,8 +653,8 @@ public class SessionManager : MonoBehaviour
         resetConfirmationPending = true;
         resetConfirmationTime = Time.time;
         var buttonText = resetButton.GetComponentInChildren<TextMeshProUGUI>();
-        buttonText.text = "¿Confirmar?";
-        instructionsText.text = "Instrucciones";
+        buttonText.text = "Confirmar?";
+        instructionsText.text = "Presiona REINICIAR de nuevo para confirmar";
     }
     void CancelResetConfirmation()
     {
@@ -660,8 +663,8 @@ public class SessionManager : MonoBehaviour
         buttonText.text = "Reiniciar";
         if (isRunning)
         {
+            instructionsText.text = instructionsMessage;
         }
-        instructionsText.text = "Instrucciones";
     }
     void ConfirmReset()
     {
@@ -671,7 +674,7 @@ public class SessionManager : MonoBehaviour
         originalSessionDuration = sessionDuration;
         SetPhraseSet(idlePhrases);
         ShowRandomPhraseFromSet(idlePhrases);
-        instructionsText.text = "Instrucciones";
+        instructionsText.text = "Presiona INICIAR cuando estes listo";
         CancelResetConfirmation();
         UpdateButtonStates();
         UpdateProgressBar();
@@ -684,12 +687,12 @@ public class SessionManager : MonoBehaviour
             isBreakTime = true;
             currentTime = breakDuration;
             originalSessionDuration = breakDuration;
-            phraseText.text = "¡Sesión completada! Tiempo de descanso";
-            instructionsText.text = "Instrucciones";
+            phraseText.text = "Sesion completada! Tiempo de descanso";
+            instructionsText.text = "Disfruta tu descanso merecido";
             if (isCapybaraActive)
-                ShowSpeechBubbleFromCharacter("Misión cumplida. Ahora es momento de paz y tranquilidad.", "capybara");
+                ShowSpeechBubbleFromCharacter("Mision cumplida. Ahora es momento de paz y tranquilidad.", "capybara");
             else
-                ShowSpeechBubbleFromCharacter("¡Objetivo logrado! ¡Eres increíble!", "tungtung");
+                ShowSpeechBubbleFromCharacter("Objetivo logrado! Eres increible!", "tungtung");
             if (capybaraAnimator != null && capybaraGameObject != null)
             {
                 bool wasActive = capybaraGameObject.activeInHierarchy;
@@ -718,12 +721,12 @@ public class SessionManager : MonoBehaviour
             isBreakTime = false;
             currentTime = sessionDuration;
             originalSessionDuration = sessionDuration;
-            phraseText.text = "¡Descanso terminado! Nueva sesión";
-            instructionsText.text = "Instrucciones";
+            phraseText.text = "Descanso terminado! Nueva sesion";
+            instructionsText.text = "Presiona INICIAR cuando estes listo";
             if (isCapybaraActive)
                 ShowSpeechBubbleFromCharacter("Comencemos de nuevo con mente clara y serena.", "capybara");
             else
-                ShowSpeechBubbleFromCharacter("¡Nueva oportunidad! ¡Vamos a brillar!", "tungtung");
+                ShowSpeechBubbleFromCharacter("Nueva oportunidad! Vamos a brillar!", "tungtung");
 
         }
         UpdateTimerDisplay();
@@ -799,11 +802,10 @@ public class SessionManager : MonoBehaviour
     {
         isRunning = true;
         SetPhraseSet(activePhrases);
-        
+
         ShowRandomPhraseFromSet(startPhrases);
-        
-        instructionsText.text = "Instrucciones";
-            
+        instructionsText.text = instructionsMessage;
+
         if (capybaraAnimator != null && capybaraGameObject != null && capybaraGameObject.activeInHierarchy)
         {
             capybaraAnimator.OnStartButtonPressed();
@@ -934,29 +936,94 @@ public class SessionManager : MonoBehaviour
     void FixDropdownTextSizing()
     {
         if (characterDropdown == null) return;
-        
+
         // Fix the label text (currently selected option)
         if (characterDropdown.captionText != null)
         {
             var labelText = characterDropdown.captionText;
-            labelText.enableAutoSizing = true;
-            labelText.fontSizeMin = 8f;
-            labelText.fontSizeMax = 20f;
+            labelText.enableAutoSizing = false;  // Desactivar auto sizing
+            labelText.fontSize = 12f;  // Tamaño más pequeño
             labelText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
             labelText.enableWordWrapping = false;
         }
-        
+
         // Fix the template text (dropdown items)
         if (characterDropdown.template != null)
         {
             var itemText = characterDropdown.template.GetComponentInChildren<TextMeshProUGUI>();
             if (itemText != null)
             {
-                itemText.enableAutoSizing = true;
-                itemText.fontSizeMin = 8f;
-                itemText.fontSizeMax = 18f;
+                itemText.enableAutoSizing = false;  // Desactivar auto sizing
+                itemText.fontSize = 12f;  // Tamaño fijo pequeño para items
                 itemText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
                 itemText.enableWordWrapping = false;
+            }
+        }
+
+        // Mejorar el diseño visual del dropdown
+        StyleDropdown();
+    }
+
+    void StyleDropdown()
+    {
+        if (characterDropdown == null) return;
+
+        // Cambiar colores del dropdown principal
+        var dropdownImage = characterDropdown.GetComponent<UnityEngine.UI.Image>();
+        if (dropdownImage != null)
+        {
+            // Color amarillo como los botones
+            dropdownImage.color = new Color(1f, 0.9f, 0.2f, 1f); // Amarillo
+        }
+
+        // Estilizar el template (lista desplegable)
+        if (characterDropdown.template != null)
+        {
+            var templateImage = characterDropdown.template.GetComponent<UnityEngine.UI.Image>();
+            if (templateImage != null)
+            {
+                // Fondo gris oscuro con bordes redondeados
+                templateImage.color = new Color(0.15f, 0.15f, 0.15f, 0.98f);
+            }
+
+            // Estilizar los items de la lista
+            var scrollRect = characterDropdown.template.GetComponentInChildren<UnityEngine.UI.ScrollRect>();
+            if (scrollRect != null)
+            {
+                var viewport = scrollRect.viewport;
+                if (viewport != null)
+                {
+                    var content = viewport.GetComponentInChildren<UnityEngine.UI.VerticalLayoutGroup>();
+                    if (content != null)
+                    {
+                        var toggle = content.GetComponentInChildren<UnityEngine.UI.Toggle>();
+                        if (toggle != null)
+                        {
+                            var toggleImage = toggle.GetComponent<UnityEngine.UI.Image>();
+                            if (toggleImage != null)
+                            {
+                                // Color de fondo de los items - gris medio
+                                toggleImage.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+                            }
+
+                            // Configurar colores de selección
+                            var colors = toggle.colors;
+                            colors.normalColor = new Color(0.25f, 0.25f, 0.25f, 1f);      // Gris normal
+                            colors.highlightedColor = new Color(0.8f, 0.7f, 0.2f, 1f);   // Amarillo claro al hover
+                            colors.pressedColor = new Color(1f, 0.9f, 0.2f, 1f);         // Amarillo fuerte al presionar
+                            colors.selectedColor = new Color(0.9f, 0.8f, 0.3f, 1f);      // Amarillo medio al seleccionar
+                            toggle.colors = colors;
+
+                            // Mejorar el texto de los items
+                            var itemText = toggle.GetComponentInChildren<TextMeshProUGUI>();
+                            if (itemText != null)
+                            {
+                                itemText.color = Color.white;  // Texto blanco
+                                itemText.fontSize = 10f;       // Tamaño pequeño para los items
+                            }
+                        }
+                    }
+                }
             }
         }
     }

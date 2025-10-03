@@ -7,4 +7,19 @@ public class CambiarEscena : MonoBehaviour
     {
         SceneManager.LoadScene(nombreEscena);
     }
+
+    public void IrAMenu()
+    {
+        SceneManager.LoadScene("MenuScene");
+    }
+
+    public void IrAMainScene()
+    {
+        SceneManager.LoadScene("MainScene");
+    }
+
+    public void IrATutorial()
+    {
+        SceneManager.LoadScene("TutorialScene");
+    }
 }
